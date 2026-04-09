@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тренажёр в стиле МЦКО</title>
+  <style>
+    :root {
+      --border: #7e7e7e;
+      --panel: #dff1f4;
+      --white: #ffffff;
+      --text: #111;
+      --muted: #666;
+      --bg: #d9d9d9;
+      --soft: #f6f6f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 12px 40px;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--white);
+      border: 2px solid var(--border);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 18px 22px;
+      border-bottom: 2px solid var(--border);
+      background: linear-gradient(to bottom, #fafafa, #ececec);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .start-screen,
+    .final-screen {
+      padding: 28px 22px 32px;
+    }
+
+    .start-card,
+    .result-card {
+      border: 2px solid var(--border);
+      background: #fff;
+      padding: 20px;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    .start-card h2,
+    .final-screen h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .start-card p,
+    .final-screen p {
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .field-group label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field-group input {
+      height: 42px;
+      border: 2px solid #9b9b9b;
+      font-size: 16px;
+      padding: 0 12px;
+    }
+
+    .main-screen,
+    .final-screen {
+      display: none;
+    }
+
+    .main-screen.show,
+    .final-screen.show {
+      display: block;
+    }
+
+    .exam-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 22px;
+      border-top: 2px solid var(--border);
+      border-bottom: 2px solid var(--border);
+      background: var(--soft);
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .student-line {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .timer {
+      font-size: 20px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border: 2px solid var(--border);
+      background: #fff;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .task-nav {
+      padding: 18px 22px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: #fff;
+    }
+
+    .task-nav button,
+    .top-actions button,
+    .start-card button {
+      border: 2px solid var(--border);
+      background: linear-gradient(to bottom, #ffffff, #e7e7e7);
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .task-nav button.active {
+      background: linear-gradient(to bottom, #fefefe, #d8edf2);
+      font-weight: 700;
+    }
+
+    .task {
+      display: none;
+      grid-template-columns: 88px 1fr;
+      border-top: 2px solid var(--border);
+      min-height: 220px;
+    }
+
+    .task.active {
+      display: grid;
+    }
+
+    .num {
+      border-right: 2px solid var(--border);
+      background: #f3f3f3;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 12px;
+      font-size: 28px;
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+
+    .content {
+      padding: 12px 14px 16px;
+    }
+
+    .rule {
+      border: 2px solid var(--border);
+      text-align: center;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 8px;
+      background: #f7f7f7;
+      margin-bottom: 18px;
+    }
+
+    .text {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .answer-box {
+      background: var(--panel);
+      border: 1px solid #c8e4e8;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .answer-box label {
+      font-size: 16px;
+    }
+
+    .answer-box input {
+      width: 140px;
+      height: 36px;
+      border: 2px solid #9b9b9b;
+      background: #fff;
+      font-size: 22px;
+      text-align: center;
+      padding: 2px 6px;
+    }
+
+    .helper {
+      padding: 16px 22px 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .result-card {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .result-card .small {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .hidden-fields {
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      .task {
+        grid-template-columns: 1fr;
+      }
+
+      .num {
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        justify-content: flex-start;
+        padding: 8px 14px;
+        font-size: 24px;
+      }
+
+      .answer-box input,
+      .field-group input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>Диагностическая работа</h1>
+      <p>Тренажёр в стиле МЦКО</p>
+    </div>
+
+    <div class="start-screen" id="startScreen">
+      <div class="start-card">
+        <h2>Начало работы</h2>
+        <p>Введите имя и нажмите начать.<br>На выполнение всех заданий у вас будет 50 минут.<br>Ответы записывайте через запятую (0,7).<br>Удачи!</p>
+        <div class="field-group">
+          <label for="studentNameStart">Имя ученика</label>
+          <input id="studentNameStart" type="text" placeholder="Введите имя" />
+        </div>
+        <div style="margin-top:16px;">
+          <button type="button" id="startBtn">Начать</button>
+        </div>
+      </div>
+    </div>
+
+    <form id="quizForm" class="main-screen" action="https://formspree.io/f/xkoqdplo" method="POST">
+      <div class="exam-topbar">
+        <div class="student-line">Ученик: <span id="studentDisplay">—</span></div>
+        <div class="timer" id="timer">50:00</div>
+        <div class="top-actions">
+          <button type="button" id="finishBtn">Закончить</button>
+        </div>
+      </div>
+
+      <div class="task-nav">
+        <button type="button" class="nav-btn active" data-target="1">1</button>
+        <button type="button" class="nav-btn" data-target="2">2</button>
+        <button type="button" class="nav-btn" data-target="5">5</button>
+        <button type="button" class="nav-btn" data-target="6">6</button>
+        <button type="button" class="nav-btn" data-target="7">7</button>
+        <button type="button" class="nav-btn" data-target="8">8</button>
+      </div>
+
+      <section class="task active" data-task="1" data-answer="56">
+        <div class="num">1</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа.</div>
+          <div class="text">
+            В четверг цена на некоторый товар поднялась на 20 %. В пятницу цена на него поднялась ещё на 30 %. На сколько процентов подорожал товар по сравнению со своей первоначальной ценой?
+          </div>
+          <div class="answer-box">
+            <label for="answer1">Ответ:</label>
+            <input id="answer1" name="answer_1" type="text" inputmode="numeric" />
+          </div>
+        </div>
+      </section>
+
+      <section class="task" data-task="2" data-answer="28">
+        <div class="num">2</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа.</div>
+          <div class="text">
+            Вычислите значение выражения:
+            <br><br>
+            <div style="text-align:center;">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAA...REPLACED_BASE64..." alt="Задание 2" style="max-width:100%; border:1px solid #999; padding:8px; background:white;">
+              <div style="font-size:13px;color:#666;margin-top:6px;">Если изображение не отображается, положите файл task2.png рядом с html‑файлом</div>
+            </div>
+          </div>
+          <div class="answer-box">
+            <label for="answer2">Ответ:</label>
+            <input id="answer2" name="answer_2" type="text" />
+          </div>
+        </div>
+      </section>
+
+      <section class="task" data-task="5" data-answer="0,25">
+        <div class="num">5</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа или конечной десятичной дроби.</div>
+          <div class="text">
+            Из коробки, в которой лежат 15 чёрных и 5 красных маркеров, достают один случайный маркер. Найдите вероятность того, что он окажется красным.
+          </div>
+          <div class="answer-box">
+            <label for="answer5">Ответ:</label>
+            <input id="answer5" name="answer_5" type="text" inputmode="decimal" />
+          </div>
+        </div>
+      </section>
+
+      <section class="task" data-task="6" data-answer="3">
+        <div class="num">6</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа.</div>
+          <div class="text">
+            Каждый из 25 учащихся в классе посещает хотя бы один из двух кружков. Известно, что 10 человек занимаются в химическом кружке, а 18 — в биологическом. Сколько учащихся посещают оба кружка?
+          </div>
+          <div class="answer-box">
+            <label for="answer6">Ответ:</label>
+            <input id="answer6" name="answer_6" type="text" inputmode="numeric" />
+          </div>
+        </div>
+      </section>
+
+      <section class="task" data-task="7" data-answer="0,35">
+        <div class="num">7</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа или конечной десятичной дроби.</div>
+          <div class="text">
+            В некотором случайном эксперименте рассматривается случайная величина <i>X</i>. Известно, что <i>P</i>(<i>X</i> ≤ 15) = 0,77 и <i>P</i>(<i>X</i> ≥ 10) = 0,58. Найдите вероятность события (10 ≤ <i>X</i> ≤ 15).
+          </div>
+          <div class="answer-box">
+            <label for="answer7">Ответ:</label>
+            <input id="answer7" name="answer_7" type="text" inputmode="decimal" />
+          </div>
+        </div>
+      </section>
+
+      <section class="task" data-task="8" data-answer="0,52">
+        <div class="num">8</div>
+        <div class="content">
+          <div class="rule">Ответ на задание запишите в виде целого числа или конечной десятичной дроби.</div>
+          <div class="text">
+            На полке стоят 6 красных чашек и 6 красных блюдец, 4 синих чашки и 4 синих блюдца. Случайным образом выбирают одно блюдце и одну чашку. Какова вероятность того, что они окажутся одного цвета?
+          </div>
+          <div class="answer-box">
+            <label for="answer8">Ответ:</label>
+            <input id="answer8" name="answer_8" type="text" inputmode="decimal" />
+          </div>
+        </div>
+      </section>
+
+      <div class="helper">Переключение между заданиями — по кнопкам сверху.</div>
+
+      <div class="hidden-fields">
+        <input type="hidden" name="student_name" id="studentNameField" />
+        <input type="hidden" name="correct_count" id="correctCountField" />
+        <input type="hidden" name="total_count" id="totalCountField" value="6" />
+        <input type="hidden" name="percentage" id="percentageField" />
+        <input type="hidden" name="answers_summary" id="answersSummaryField" />
+        <input type="hidden" name="time_spent" id="timeSpentField" />
+        <input type="hidden" name="submit_reason" id="submitReasonField" />
+        <input type="hidden" name="_subject" value="Результат ученика с сайта МЦКО" />
+      </div>
+    </form>
+
+    <div class="final-screen" id="finalScreen">
+      <h2>Работа завершена</h2>
+      <p>Ответы отправлены. Ниже показан итог без правильных ответов.</p>
+      <div class="result-card" id="resultCard"></div>
+    </div>
+  </div>
+
+  <script>
+    const TASK_DURATION_SECONDS = 50 * 60;
+
+    const startScreen = document.getElementById('startScreen');
+    const mainScreen = document.getElementById('quizForm');
+    const finalScreen = document.getElementById('finalScreen');
+    const startBtn = document.getElementById('startBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const timerEl = document.getElementById('timer');
+    const resultCard = document.getElementById('resultCard');
+    const studentDisplay = document.getElementById('studentDisplay');
+    const studentNameStart = document.getElementById('studentNameStart');
+    const studentNameField = document.getElementById('studentNameField');
+    const quizForm = document.getElementById('quizForm');
+    const tasks = [...document.querySelectorAll('.task')];
+    const navButtons = [...document.querySelectorAll('.nav-btn')];
+
+    let timeLeft = TASK_DURATION_SECONDS;
+    let timerInterval = null;
+    let startedAt = null;
+    let isSubmitted = false;
+
+    function normalize(value) {
+      return String(value).replace(/\s+/g, '').replace('.', ',').trim();
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function showTask(taskNumber) {
+      tasks.forEach(task => {
+        task.classList.toggle('active', task.dataset.task === taskNumber);
+      });
+
+      navButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === taskNumber);
+      });
+    }
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => showTask(btn.dataset.target));
+    });
+
+    function getResults() {
+      let correctCount = 0;
+      const summary = [];
+
+      tasks.forEach(task => {
+        const number = task.dataset.task;
+        const input = task.querySelector('input');
+        const userAnswer = normalize(input.value);
+        const correctAnswer = normalize(task.dataset.answer);
+        const isCorrect = userAnswer !== '' && userAnswer === correctAnswer;
+
+        if (isCorrect) correctCount += 1;
+
+        summary.push(`Задание ${number}: ${userAnswer || 'нет ответа'} | ${isCorrect ? 'верно' : 'неверно'}`);
+      });
+
+      return {
+        correctCount,
+        totalCount: tasks.length,
+        percentage: Math.round((correctCount / tasks.length) * 100),
+        summary: summary.join(' ; ')
+      };
+    }
+
+    function getTimeSpent() {
+      if (!startedAt) return '0 мин';
+      const secondsSpent = Math.max(0, TASK_DURATION_SECONDS - timeLeft);
+      const mins = Math.floor(secondsSpent / 60);
+      const secs = secondsSpent % 60;
+      return `${mins} мин ${secs} сек`;
+    }
+
+    async function submitResults(reason) {
+      if (isSubmitted) return;
+      isSubmitted = true;
+
+      clearInterval(timerInterval);
+
+      const results = getResults();
+      document.getElementById('correctCountField').value = results.correctCount;
+      document.getElementById('percentageField').value = results.percentage + '%';
+      document.getElementById('answersSummaryField').value = results.summary;
+      document.getElementById('timeSpentField').value = getTimeSpent();
+      document.getElementById('submitReasonField').value = reason;
+
+      mainScreen.classList.remove('show');
+      finalScreen.classList.add('show');
+      resultCard.innerHTML = `Верно: ${results.correctCount} из ${results.totalCount}. Процент выполнения: ${results.percentage}%.<span class="small"></span>`;
+      finalScreen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        const formData = new FormData(quizForm);
+        const response = await fetch(quizForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+          console.error('Не удалось отправить форму в Formspree');
+        }
+      } catch (error) {
+        console.error('Ошибка отправки:', error);
+      }
+    }
+
+    function startTimer() {
+      timerEl.textContent = formatTime(timeLeft);
+
+      timerInterval = setInterval(() => {
+        timeLeft -= 1;
+        timerEl.textContent = formatTime(Math.max(0, timeLeft));
+
+        if (timeLeft <= 0) {
+          submitResults('timer');
+        }
+      }, 1000);
+    }
+
+    startBtn.addEventListener('click', () => {
+      const name = studentNameStart.value.trim();
+      if (!name) {
+        alert('Введите имя ученика.');
+        studentNameStart.focus();
+        return;
+      }
+
+      startedAt = Date.now();
+      studentDisplay.textContent = name;
+      studentNameField.value = name;
+      startScreen.style.display = 'none';
+      mainScreen.classList.add('show');
+      showTask('1');
+      startTimer();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    finishBtn.addEventListener('click', () => {
+      submitResults('manual');
+    });
+  </script>
+</body>
+</html>
